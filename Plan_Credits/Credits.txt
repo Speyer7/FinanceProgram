@@ -1,0 +1,5 @@
+Einnahmen: #208844
+Ausgaben: #9c1c78
+Auslesung/Darstellung: #606c84
+Umrandung von Auslesungen/Darstellungen: #0093AF
+Buttons: #F25E24

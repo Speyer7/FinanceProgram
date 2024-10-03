@@ -1,0 +1,194 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+from matplotlib.ticker import FuncFormatter
+from openpyxl import load_workbook
+import matplotlib.patches as patches
+import pylab
+import tkinter as tk
+import seaborn as sns
+
+year = "2024"
+
+def GetAllKategoriesMonth_diagram_bottom_left(year, MonthInp):
+
+    wb = load_workbook("Finanzen" + str(year) + ".xlsx")  # Erstellt NEUES, bei nur hinzufügen/abändern nutze load_workbook
+    ws = wb["Finanzen"]
+
+    wbGehalt = load_workbook("Gehalt" + year + ".xlsx")
+    wsGehalt = wbGehalt["Gehalt"]
+
+    gehaltAll = 0
+    global gehaltMonth
+    gehaltMonth = 0
+
+    MonthCol = "A"
+    print("---------------" + MonthInp)
+    if MonthInp == "Januar":
+        MonthCol = "B"
+    if MonthInp == "Februar":
+        MonthCol = "C"
+    if MonthInp == "März":
+        MonthCol = "D"
+    if MonthInp == "April":
+        MonthCol = "E"
+    if MonthInp == "Mai":
+        MonthCol = "F"
+    if MonthInp == "Juni":
+        MonthCol = "G"
+    if MonthInp == "Juli":
+        MonthCol = "H"
+    if MonthInp == "August":
+        MonthCol = "I"
+    if MonthInp == "September":
+        MonthCol = "J"
+    if MonthInp == "Oktober":
+        MonthCol = "K"
+    if MonthInp == "November":
+        MonthCol = "L"
+    if MonthInp == "Dezember":
+        MonthCol = "M"
+
+    print("---------------------" + MonthCol)
+    
+    global gehaltdieserMonat
+    gehaltdieserMonat = 0
+    for row in range(2, wsGehalt.max_row + 1):
+        print(row)
+        gehaltdieserMonat += round(float(wsGehalt[str(MonthCol) + str(row)].value), 2)
+        gehaltAll += gehaltdieserMonat
+    print("gehalt dieser Monat: " + str(gehaltdieserMonat))
+
+
+    
+
+    global AllValuesTogether
+    AllValuesTogether = 0
+
+    global Kategorien
+    Kategorien = []
+    global Beträge
+    Beträge = []
+
+    for row in range(2, ws.max_row + 1):
+        print(ws["A" + str(row)].value)
+        Kategorien.insert(int(Kategorien.__len__()) + 1, ws["A" + str(row)].value)
+
+        if str(ws[MonthCol + str(row)].value) == "None":
+            ws[MonthCol + str(row)].value = 0
+
+        print(ws[MonthCol + str(row)].value)
+        Beträge.insert(int(Kategorien.__len__()) + 1, ws[MonthCol + str(row)].value)
+        AllValuesTogether += float(ws[MonthCol + str(row)].value)
+
+
+    print("---------------")
+    print("Zusammen:")
+    print(AllValuesTogether)
+
+    global KategorienListe
+    KategorienListe = Kategorien
+    print(KategorienListe)
+    global BeträgeListe
+    BeträgeListe = Beträge
+    print(BeträgeListe)
+
+
+
+
+
+
+
+    for row in range(2, wsGehalt.max_row + 1):
+        print(row)
+        gehaltdieserMonat += round(float(wsGehalt[MonthCol + str(row)].value), 2)
+        gehaltAll += gehaltdieserMonat
+    print("gehalt dieser Monat : " + str(gehaltdieserMonat))
+
+    global Relation
+    Relation = float(gehaltdieserMonat) - float(AllValuesTogether)
+    print(Relation)
+    Relation = round(Relation, 2)
+
+
+def plot_kategorienMonth(year, month):
+    GetAllKategoriesMonth_diagram_bottom_left(year, month)  # Ruft Ihre Funktion auf, um die Daten zu erhalten
+
+    # Konvertieren Sie die Beträge in Floats
+    betraege = [float(betrag) for betrag in BeträgeListe]
+
+    # Erstellen Sie das Diagramm
+    fig, ax = plt.subplots(figsize=(16, 9), facecolor='#f0f0f0')
+    ax.set_facecolor('#ffffff')
+    fig.canvas.manager.set_window_title(f"Mein Finanzüberblick {month} {year}")
+
+    # Balkenbreite und Positionen
+    bar_width = 0.7
+    r = np.arange(len(KategorienListe))
+
+    # Erstellen Sie die Balken
+    bars = ax.bar(r, betraege, color='#FF6B6B', width=bar_width, edgecolor='white', linewidth=0.7, alpha=0.8, label="Ausgaben")
+    ax.legend(fontsize=14, loc='upper left', frameon=True, facecolor='white', edgecolor='gray')
+
+    # Beschriftungen und Titel
+    ax.set_xlabel('Kategorien', fontsize=16, fontweight='bold', labelpad=15)
+    ax.set_ylabel('Beträge (€)', fontsize=16, fontweight='bold', labelpad=15)
+    ax.set_title(f'Ausgaben aller Kategorien des Monats {month} im Jahr {year}', fontsize=24, fontweight='bold', pad=20)
+
+    # Rotieren Sie die x-Achsen-Beschriftungen für bessere Lesbarkeit
+    plt.xticks(r, KategorienListe, rotation=45, ha='right', fontsize=12)
+
+    # Formatieren Sie die y-Achse als Währung
+    def currency_formatter(x, p):
+        return f"{x:,.0f} €" ##########################################################Hier mit '2f' die nachkommastellen bearbeiten
+    ax.yaxis.set_major_formatter(FuncFormatter(currency_formatter))
+
+    # Fügen Sie Werte über den Balken hinzu
+    for bar in bars:
+        height = bar.get_height()
+        ax.text(bar.get_x() + bar.get_width()/2., height,
+                f'{height:,.0f} €',##########################################################Hier mit '2f' die nachkommastellen bearbeiten
+                ha='center', va='bottom', fontsize=10, fontweight='bold')
+
+    # Fügen Sie eine Textbox mit Gesamtinformationen hinzu
+    props = dict(boxstyle='round,pad=0.5', facecolor='white', alpha=0.7, edgecolor='gray')
+    info_text = (f"Einnahmen im Monat: {gehaltdieserMonat:,.2f} €\n"
+                 f"Ausgaben im Monat: {AllValuesTogether:,.2f} €\n"
+                 f"Differenz: {Relation:,.2f} €")
+    ax.text(0.992, 0.98, info_text, transform=ax.transAxes, 
+            fontsize=14, verticalalignment='top', horizontalalignment='right',
+            bbox=props)
+
+    # Fügen Sie ein Gitternetz hinzu
+    ax.grid(True, linestyle='--', alpha=0.7, axis='y')
+
+    # Entfernen Sie die obere und rechte Achse
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+
+    # Fügen Sie einen Rahmen um den Plotbereich hinzu
+    for spine in ax.spines.values():
+        spine.set_edgecolor('#CCCCCC')
+
+    # Fügen Sie einen Farbverlauf als Hintergrund hinzu
+    gradient = np.linspace(0, 1, 256).reshape(1, -1)
+    gradient = np.vstack((gradient, gradient))
+    ax.imshow(gradient, extent=[ax.get_xlim()[0], ax.get_xlim()[1], ax.get_ylim()[0], ax.get_ylim()[1]], 
+              aspect='auto', alpha=0.1, cmap='coolwarm')
+
+    # Fügen Sie ein Titelfeld hinzu
+    title_box = patches.Rectangle((0, 1.02), 1, 0.08, transform=ax.transAxes, fill=True,
+                                  facecolor='lightgray', edgecolor='none', alpha=0.8)
+    ax.add_patch(title_box)
+
+    # Add a watermark
+    fig.text(0.95, 0, 'Jonas Gaiser', fontsize=12, color='gray', ha='right', va='bottom', alpha=0.5)
+
+    # Passen Sie das Layout an
+    plt.tight_layout()
+
+    # Zeigen Sie das Diagramm an
+    plt.show()
+
+# Verwenden Sie die Funktion
+plot_kategorienMonth("2024", "Januar")
